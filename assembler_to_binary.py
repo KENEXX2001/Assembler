@@ -1,39 +1,42 @@
-#Definición del diccionario de symbol_table
+#Proyecto #6 - Assembler to Binary
+
+# El diccionario symbol_table contiene las asignaciones predefinidas de símbolos y direcciones de memoria.
+# Cada clave representa un símbolo y su valor corresponde a la dirección de memoria asignada.
 symbol_table = {
-    'SP': 0,
-    'LCL': 1,
-    'ARG': 2,
-    'THIS': 3,
-    'THAT': 4,
-    'SCREEN': 16384,
-    'KBD': 24576
+    'SP': 0,        # SP: Puntero de pila
+    'LCL': 1,       # LCL: Puntero al segmento local
+    'ARG': 2,       # ARG: Puntero al segmento de argumentos
+    'THIS': 3,      # THIS: Puntero al segmento THIS
+    'THAT': 4,      # THAT: Puntero al segmento THAT
+    'SCREEN': 16384,    # SCREEN: Dirección base de la pantalla
+    'KBD': 24576        # KBD: Dirección base del teclado
 }
+
+# next_available_address es una variable que indica la próxima dirección de memoria disponible para asignar a una etiqueta o símbolo.
+# Inicialmente se establece en 16, ya que las direcciones de memoria anteriores están asignadas a los símbolos predefinidos.
 next_available_address = 16
 
 def translate_a_instruction(instruction):
-    global next_available_address # Declarar next_available_address como una variable global
-    # Verifica si la instrucción es un número decimal
+    global next_available_address  # Declarar next_available_address como una variable global
+    
     if instruction.isdigit():
+        # Si la instrucción es un número decimal, se convierte a su representación binaria de 16 bits.
         decimal_value = int(instruction)
         binary_value = bin(decimal_value)[2:].zfill(16)
         return binary_value
     else:
-        # La instrucción es una etiqueta o símbolo
-        # Aquí deberías implementar la lógica para manejar las etiquetas y símbolos
-        # según las convenciones del lenguaje Hack Assembler
-        
-        # Ejemplo: Si asumimos que todas las etiquetas/símbolos son variables y deben asignarse direcciones
-        # de memoria secuenciales a partir de la dirección 16, podríamos hacer lo siguiente:
-        
-        # Primero, verifica si la etiqueta/símbolo ya está en el diccionario de conversiones
+        # Si la instrucción no es un número decimal, se asume que es una etiqueta o símbolo.
+        # Si la etiqueta o símbolo ya está en el diccionario symbol_table, se obtiene la dirección asociada.
+        # De lo contrario, se asigna una nueva dirección a la etiqueta o símbolo y se actualiza el diccionario.
+        # La nueva dirección se toma de la variable next_available_address y se incrementa para la siguiente asignación.
         if instruction in symbol_table:
             address = symbol_table[instruction]
         else:
-            # La etiqueta/símbolo no está en el diccionario, así que asignamos una nueva dirección de memoria
             address = next_available_address
             symbol_table[instruction] = address
             next_available_address += 1
         
+        # La dirección se convierte a su representación binaria de 16 bits.
         binary_value = bin(address)[2:].zfill(16)
         return binary_value
     
@@ -131,20 +134,22 @@ def translate_c_instruction(instruction):
 def translate_file(file_name):
     global next_available_address  # Declarar next_available_address como una variable global
 
-    translations = []
+    translations = []  # Lista para almacenar las traducciones de las instrucciones
 
     with open(file_name, "r") as file:
         for line in file:
-            line = line.strip().split("//")[0]
+            line = line.strip().split("//")[0]  # Eliminar espacios en blanco y comentarios
 
             if line:
                 if line.startswith("@"):
+                    # Si la línea comienza con "@" es una instrucción A
                     instruction = line[1:]
                     binary_instruction = translate_a_instruction(instruction)
-                    translations.append((binary_instruction, f'@{instruction}'))
+                    translations.append((binary_instruction, f'@{instruction}'))  # Agregar la traducción y la instrucción original a la lista
                 else:
+                    # Si no es una instrucción A, se asume que es una instrucción C
                     binary_instruction = translate_c_instruction(line)
-                    translations.append((binary_instruction, line))
+                    translations.append((binary_instruction, line))  # Agregar la traducción y la instrucción original a la lista
 
     return translations
 
